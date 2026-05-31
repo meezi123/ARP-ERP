@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import FormField from '../../components/ui/FormField';
+import useApiQuery from '../../hooks/useApiQuery';
 import { createItem, updateItem } from './items.api';
 
 const VALUATION_METHODS = ['FIFO', 'Moving Average', 'LIFO'];
@@ -11,6 +12,13 @@ export default function ItemForm({ defaultValues, onSuccess, onClose }) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     defaultValues: defaultValues || { stock_uom: 'Nos', valuation_method: 'FIFO', is_stock_item: 1 }
   });
+
+  const { data: groupsData, loading: groupsLoading } = useApiQuery('/api/resource/Item Group', {
+    fields: JSON.stringify(['name']),
+    limit: 200,
+    order_by: 'name asc',
+  });
+  const itemGroups = groupsData?.data || [];
 
   const onSubmit = async (data) => {
     try {
@@ -40,8 +48,11 @@ export default function ItemForm({ defaultValues, onSuccess, onClose }) {
             placeholder="e.g. Blue Widget" aria-label="Item name" />
         </FormField>
         <FormField label="Item Group" required error={errors.item_group?.message}>
-          <input className="glass-input" {...register('item_group', { required: 'Item group is required' })}
-            placeholder="e.g. Raw Material" aria-label="Item group" />
+          <select className="glass-input" {...register('item_group', { required: 'Item group is required' })} aria-label="Item group"
+            disabled={groupsLoading}>
+            <option value="">{groupsLoading ? 'Loading…' : 'Select group…'}</option>
+            {itemGroups.map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
+          </select>
         </FormField>
         <FormField label="Stock UOM" required error={errors.stock_uom?.message}>
           <input className="glass-input" {...register('stock_uom', { required: 'UOM is required' })}
@@ -57,11 +68,11 @@ export default function ItemForm({ defaultValues, onSuccess, onClose }) {
             placeholder="0.00" aria-label="Standard rate" />
         </FormField>
         <FormField label="Opening Stock">
-          <input className="glass-input mono-data" type="number" step="0.001" {...register('opening_stock')}
+          <input className="glass-input mono-data" type="number" step="1" {...register('opening_stock')}
             placeholder="0" aria-label="Opening stock" />
         </FormField>
         <FormField label="Safety Stock">
-          <input className="glass-input mono-data" type="number" step="0.001" {...register('safety_stock')}
+          <input className="glass-input mono-data" type="number" step="1" {...register('safety_stock')}
             placeholder="0" aria-label="Safety stock" />
         </FormField>
       </div>

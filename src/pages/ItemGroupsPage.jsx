@@ -1,11 +1,40 @@
-import PageHeader from '../components/ui/PageHeader';
-import EmptyState from '../components/ui/EmptyState';
-import { Layers } from 'lucide-react';
+import { useState } from 'react';
+import ItemGroupList from '../modules/itemGroups/ItemGroupList';
+import Drawer from '../components/ui/Drawer';
+import ItemGroupForm from '../modules/itemGroups/ItemGroupForm';
+
 export default function ItemGroupsPage() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
+  const [key, setKey] = useState(0);
+
+  const handleSuccess = () => {
+    setKey(k => k + 1);
+    setDrawerOpen(false);
+    setEditTarget(null);
+  };
+
+  const openEdit = (row) => {
+    setEditTarget(row);
+    setDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setEditTarget(null);
+  };
+
   return (
-    <div className="space-y-4">
-      <PageHeader title="Item Groups" subtitle="Hierarchical item categorization" />
-      <EmptyState icon={Layers} title="Item Groups" message="Tree view for item groups is available when connected to your ERPNext instance." />
-    </div>
+    <>
+      <ItemGroupList key={key} onCreateClick={() => setDrawerOpen(true)} onEditClick={openEdit} />
+      <Drawer open={drawerOpen} onClose={closeDrawer} title={editTarget ? 'Edit Item Group' : 'New Item Group'}>
+        <ItemGroupForm
+          key={editTarget?.name ?? 'new'}
+          defaultValues={editTarget}
+          onSuccess={handleSuccess}
+          onClose={closeDrawer}
+        />
+      </Drawer>
+    </>
   );
 }
